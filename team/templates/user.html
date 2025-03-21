@@ -1,0 +1,130 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome, {{ username }}</title>
+    <link rel="stylesheet" href="{% static 'user_page_style.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="logo">
+            <h1>INNOCONNECT</h1>
+        </div>
+        <div class="user-menu">
+            <div class="user-info" onclick="toggleDropdown()">
+                <span class="username">Welcome, {{ username }}</span>
+                <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="dropdown-content">
+                <a href="{% url 'my_problems' %}"><i class="fas fa-list"></i> My Problems</a>
+                <a href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Post Button -->
+        <button class="post-button" onclick="showPopup()">
+            <i class="fas fa-plus"></i> Post a Problem
+        </button>
+
+        <!-- Popup Form -->
+        <div class="popup-overlay" id="popup">
+            <div class="popup-content">
+                <button class="close-btn" onclick="closePopup()"><i class="fas fa-times"></i></button>
+                <h2>Post a Problem</h2>
+                <form action="{% url 'post' %}" method="POST">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="title">Title</label>
+                        <input type="text" id="title" name="title" placeholder="Enter your project name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="description">Description</label>
+                        <textarea id="description" name="description" placeholder="Enter your description" rows="5" required></textarea>
+                    </div>
+                    <button type="submit" class="submit-btn">Submit</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Posted Problems Section -->
+        <section class="problems-section">
+            <h2>Posted Problems</h2>
+            
+            <!-- Search Bar -->
+            <div class="search-bar">
+                <input type="text" id="search-input" placeholder="Search problems by title or description...">
+                <button onclick="searchProblems()"><i class="fas fa-search"></i> Search</button>
+                <button onclick="clearSearch()"><i class="fas fa-times"></i> Clear</button>
+            </div>
+
+            <!-- Problems List -->
+            <div class="problems-list">
+                {% if problems %}
+                    {% for problem in problems %}
+                    <div class="problem-card" data-title="{{ problem.title|lower }}" data-description="{{ problem.description|lower }}">
+                        <div class="problem-header">
+                            <img src="{{ problem.user.profile_picture.url }}" alt="Profile Picture" class="profile-pic">
+                            <div class="user-details">
+                                <span class="username">{{ problem.user.username }}</span>
+                                <span class="post-date">{{ problem.created_at|date:"F d, Y" }}</span>
+                            </div>
+                        </div>
+                        <div class="problem-body">
+                            <h3 class="problem-title">{{ problem.title }}</h3>
+                            <p class="problem-description" id="description-{{ problem.id }}">{{ problem.description }}</p>
+                            <button class="read-more" id="toggle-btn-{{ problem.id }}" onclick="toggleDescription('{{ problem.id }}')">Read More</button>
+                            <div class="problem-status">
+                                <span class="status-label">{{ problem.get_status_display }}</span>
+                            </div>
+                        </div>
+                        <div class="problem-footer">
+                            <a href="https://mail.google.com/mail/?view=cm&fs=1&to={{ problem.user.email }}" target="_blank" class="chat-button">
+                                <i class="fas fa-envelope"></i> Chat with {{ problem.user.username }}
+                            </a>
+                        </div>
+
+                        <!-- Solutions Section -->
+                        {% if problem.solutions.all %}
+                        <div class="solutions-section">
+                            <button class="toggle-solutions" onclick="toggleSolutions('{{ problem.id }}')">
+                                <i class="fas fa-comments"></i> View Solutions
+                            </button>
+                            <div class="solutions-list" id="solutions-{{ problem.id }}">
+                                {% for solution in problem.solutions.all %}
+                                <div class="solution-card">
+                                    <div class="solution-header">
+                                        <img src="{{ solution.organizer.profile_picture.url }}" alt="Organizer Picture" class="profile-pic">
+                                        <div class="organizer-details">
+                                            <span class="username">{{ solution.organizer.username }}</span>
+                                            <span class="solution-date">{{ solution.timestamp|date:"F d, Y H:i" }}</span>
+                                        </div>
+                                    </div>
+                                    <p class="solution-text">{{ solution.solution_text }}</p>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% else %}
+                        <p class="no-solutions">No solutions yet.</p>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="no-problems">No problems posted yet.</p>
+                {% endif %}
+            </div>
+        </section>
+    </main>
+
+    <!-- Scripts -->
+    <script src="{% static 'script.js' %}"></script>
+</body>
+</html>
